@@ -79,8 +79,8 @@ router.put('/:id', (req, res) => {
         res.end();
     };
 
-    BlogPosts.update({ title, content, author, publishDate, id });
-    res.status(204);
+    const updatedItem = BlogPosts.update({ title, content, author, publishDate, id });
+    res.status(200).json(updatedItem);
     res.end();
 });
 //-----------------------------------END of PUT------------------------------------//
