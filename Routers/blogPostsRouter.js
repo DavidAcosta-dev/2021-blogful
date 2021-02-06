@@ -8,7 +8,7 @@ const initialBlogs = [
     {
         title: "life is amazing",
         author: "David Acosta",
-        content: "wow, there is so much to see in the world. Let's go"
+        content: "wow, there is so much to see in the world. Let's go! We shouldn't wait any longer!"
 
     },
     {
