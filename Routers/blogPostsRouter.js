@@ -1,5 +1,4 @@
 const express = require('express'); //import express framework
-const { restart } = require('nodemon');
 const router = express.Router(); //desctruct router
 
 const { BlogPosts } = require('../models');//import model

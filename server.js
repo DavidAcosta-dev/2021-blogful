@@ -2,17 +2,20 @@
 const express = require('express');
 const morgan = require('morgan');
 
+//create the express app
+const app = express();
+
 //import blogPosts router
 const blogPostsRouter = require('./Routers/blogPostsRouter');
 
-//create the express app
-const app = express();
+
 
 //apply middleware
 app.use(morgan('common'));//log http layer
 app.use(express.json())//parse incoming json from PUT or POST
 
 app.use(express.static('public'));
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/index.html');
 });
