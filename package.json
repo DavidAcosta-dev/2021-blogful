@@ -1,15 +1,19 @@
 {
   "name": "2021-blogful",
   "version": "1.0.0",
-  "description": "",
+  "description": "Blogful application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "mocha"
+    "test": "mocha" 
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Acosta816/2021-blogful"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
     "morgan": "^1.10.0",
