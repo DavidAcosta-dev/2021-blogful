@@ -2,3 +2,12 @@ language: node_js
 node_js: node
 services:
 - mongodb
+deploy:
+  provider: heroku
+  api_key:
+    secure: N8dnw6woPxblOOvuqBxQiab5qVOnZu6jGHb0MJUI6TmQOKSwjQgOS365mE6Q2iw73eniaN5d5k5xGE1WqQoa/hUBujcal+QJGexLE4aoGYBKnvT8r1u/lhGn+489qeMHeWOszCXJ0n/UOyOFj9dhhsZrFziTylHhfgmoTRnxyz6WbXNEICC2oYK72vkGa//sA1aDAF40aQx3qN9Nx/L2OQ/U+dCvL05+SWoHCk4MG5reCqq43g7Hyf7oRFngbWt8fKsbXaIYP/SSERULlKoZaL+pIeNhcRTau23WUzmj4RSbl+UJ5pKt0lwwUfrEGsDbNCZ+d5CzNUclrAmKEWBYQvWOpo7xpEkSN02bYkOhomysPBBu7trBrVg7XCZ8zb8/DNnzL5E6k0knYWiaztWWqzxvJErVUJbzj34UvQ+lqn6S0APhaUZifqPUQLJYBR03G9rtyFcHM2njnAw2ArCUn5PJvrO1mB2cBwhSc/TPIPspSUJ96kVVipaMOYuZfhPJUk0CZMxYjaxITHhbwO5rPDtQLJtWzOntg9DdbZZOWJ1vnAJOQPEgjCKPzg0rEpImt9dExww2aTvPEbpoHzQbXdXTm3dyJvmH5P+zKX/ykNR3BYqBzNE8y+mcoznxAJyQPlbktTRuYkV8hzelGIeDCuFpTkVCx8c5V0gadIWkPwI=
+  app: blogful-2021
+  on:
+    repo: Acosta816/2021-blogful
+    branch: main
+  skip_cleanup: 'true'
