@@ -3,7 +3,6 @@ const router = express.Router(); //desctruct router
 const { BlogPost } = require('../models');
 
 const mongoose = require('mongoose');//import mongoose (Do we use mongoose in here?)
-const { request } = require('chai');
 mongoose.Promise = global.Promise;// i don't think we're using this here....
 
 //Get by :id
