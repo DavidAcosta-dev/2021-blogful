@@ -1,37 +1,63 @@
 const express = require('express'); //import express framework
 const router = express.Router(); //desctruct router
+const { BlogPost } = require('../models');
 
-const { BlogPosts } = require('../models');//import model
+const mongoose = require('mongoose');//import mongoose (Do we use mongoose in here?)
+const { request } = require('chai');
+mongoose.Promise = global.Promise;// i don't think we're using this here....
 
+//Get by :id
+router.get("/:id", (req, res) => {
+    BlogPost.findById(req.params.id)
+        .then(pst => {
+            return res.status(200).json(pst.easyRead());
+        })
+        .catch(err => {
+            const errMsg = {
+                message: `Internal Server Error, whoops, sorry!`,
+                error: err
+            }
+            console.error(errMsg);
+            res.status(500).send(errMsg);
+        })//end of catch
+});
+//--------------------------------END of GET/:id-----------------------------------//
 
-const initialBlogs = [
-    {
-        title: "life is amazing",
-        author: "David Acosta",
-        content: "wow, there is so much to see in the world. Let's go! We shouldn't wait any longer!"
-
-    },
-    {
-        title: "How to Draw",
-        author: "Bee space",
-        content: "Fish cakes! I haven't had these in forever!"
-
-    },
-    {
-        title: "Love yourself",
-        author: "Lany Acosta",
-        content: "The truth is in you. You don't need approval. leave it. pick yourself up, dust yourself off and walk. you are alive! :)"
-
-    }
-];
-
-for (let i = 0; i < initialBlogs.length; i++) {
-    const { title, author, content } = initialBlogs[i];
-    BlogPosts.create(title, content, author);
-};
 
 router.get('/', (req, res) => {
-    res.status(200).json(BlogPosts.get());
+    //if search req.query object is empty, just return all posts
+    if (Object.keys(req.query).length < 1) {
+        console.log("no query specified. Getting ALL blogs");
+        BlogPost.find()
+            .then(posts => {
+                return res.status(200).json(posts.map(post => post.easyRead()));
+            });
+    };
+
+    console.log(req.query);
+
+    const filters = {};
+    const queryableFields = ["title", "author"];
+
+    queryableFields.forEach(field => {
+        if (req.query[field]) {
+            filters[field] = req.query[field]
+        }
+    });
+
+    //Now query the database with the "filters" query object.
+    BlogPost.find(filters)
+        .then(posts => {
+            return res.status(200).json(posts.map(post => post.easyRead()));
+        })
+        .catch(err => {
+            const errMsg = {
+                message: `Something's gone wrong on our end, sorry`,
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg);
+        });
 });
 //-----------------------------------END of GET------------------------------------//
 
@@ -39,7 +65,7 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
     const requiredFields = ["title", "author", "content"];
     for (let i = 0; i < requiredFields.length; i++) {
-        if (!req.body[requiredFields[i]] || (req.body[requiredFields[i]].trim().length < 1)) {
+        if (!(req.body[requiredFields[i]])) {
             const errMsg = `Missing "${requiredFields[i]}" field in body`;
             console.error(errMsg);
             res.status(400).send(errMsg);
@@ -48,46 +74,71 @@ router.post('/', (req, res) => {
     };
 
     const { title, author, content } = req.body;
-
-    const post = BlogPosts.create(title, content, author, req.body.publishDate || null);
-    res.status(201).json(post);
-    res.end();
+    BlogPost.create({ title, author, content, })
+        .then(post => {
+            return res.status(201).json(post.easyRead())
+        })
+        .catch(err => {
+            const errMsg = {
+                message: `Something's gone wrong on our end, sorry`,
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg);
+        })
 });
 //-----------------------------------END of POST------------------------------------//
 
 
 router.put('/:id', (req, res) => {
-    const requiredFields = ["title", "content", "author", "publishDate", "id"];
-    for (let i = 0; i < requiredFields.length; i++) {
-        if (!req.body[requiredFields[i]]) {
-            const errorMsg = `Missing "${requiredFields[i]}" field in body.`;
-            console.error(errorMsg);
-            res.status(400).send(errorMsg);
-            res.end();
-        }
+    //ensure body id and url id match
+    if (req.params.id !== req.body.id) {
+        const errMsg = "Please ensure the req.body.id and url param id match. Must include both.";
+        console.error(errMsg);
+        res.status(400).send(errMsg).end();
     };
 
-    //destruct req.body and urlId since they exist
-    const { title, content, author, publishDate, id } = req.body;
-    const urlId = req.params.id;
-    //validate urlId and body id match
-    if (urlId !== id) {
-        const errorMsg = 'url id and req.body id do not match';
-        console.error(errorMsg);
-        res.status(400).send(errorMsg);
-        res.end();
-    };
+    //make new object out of all valid fields in updateableFields.
+    const updateableFields = ["title", "author", "content"];
+    const newBody = {};
+    updateableFields.forEach(field => {
+        if (field in req.body) {
+            newBody[field] = req.body[field];
+        };
+    });
 
-    const updatedItem = BlogPosts.update({ title, content, author, publishDate, id });
-    res.status(200).json(updatedItem);
-    res.end();
+    console.log(newBody);
+
+    BlogPost.findByIdAndUpdate(req.params.id, { $set: newBody }, { new: true })
+        .then(pst => {
+            res.status(200).json(pst).end();
+        })
+        .catch(err => {
+            const errMsg = {
+                message: "Whoops, Internal Server error",
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg).end();
+        });
 });
 //-----------------------------------END of PUT------------------------------------//
 
 
 router.delete('/:id', (req, res) => {
-    BlogPosts.delete(req.params.id);
-    res.status(204).end();
+    BlogPost.findByIdAndRemove(req.params.id)
+        .then(() => {
+            console.log(`Successfully deleted blog post with id of ${req.params.id}`);
+            res.status(204).end();
+        })
+        .catch(err => {
+            const errMsg = {
+                message: "Whoops, Internal Server error",
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg).end();
+        });
 });
 //-----------------------------------END of DELETE------------------------------------//
 
