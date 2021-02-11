@@ -1,6 +1,7 @@
 const express = require('express'); //import express framework
 const router = express.Router(); //desctruct router
-const { BlogPost } = require('../models');
+
+const { BlogPost, Author } = require('../models');
 
 const mongoose = require('mongoose');//import mongoose (Do we use mongoose in here?)
 mongoose.Promise = global.Promise;// i don't think we're using this here....
@@ -37,6 +38,7 @@ router.get('/', (req, res) => {
 
     const filters = {};
     const queryableFields = ["title", "author"];
+    //you can query by "author" by querying the author id# or title by using the blog title ...for example:       http://localhost:8080/blog-posts/?author=5af50c84c082f1e92f834209  < -- this will find all blog posts by that author
 
     queryableFields.forEach(field => {
         if (req.query[field]) {
@@ -61,8 +63,17 @@ router.get('/', (req, res) => {
 //-----------------------------------END of GET------------------------------------//
 
 
+
+
+/*To post you must include an object in the request body in the following json format:
+{
+    "title": "Temp jobs are kinda interesting",
+    "author_id": "5af50c84c082f1e92f83420a", //important: need the author's id
+    "content": "Blahh blahh. The blahhh blaa thing that bllaahhhhh in the blahhh blahhhh forest and blaah lake blahhh"
+}
+*/
 router.post('/', (req, res) => {
-    const requiredFields = ["title", "author", "content"];
+    const requiredFields = ["title", "author_id", "content"];
     for (let i = 0; i < requiredFields.length; i++) {
         if (!(req.body[requiredFields[i]])) {
             const errMsg = `Missing "${requiredFields[i]}" field in body`;
@@ -72,8 +83,20 @@ router.post('/', (req, res) => {
         };
     };
 
-    const { title, author, content } = req.body;
-    BlogPost.create({ title, author, content, })
+    const { title, author_id, content } = req.body;
+
+    //NEXT: Check if the author exists before
+    //************************************************************* */
+    //************************************************************* */
+    //*************BOOKMARK**************************************** */
+    //***********************************BOOKMARK****************** */
+    //************************************************************* */
+    //**********************BOOKMARK******************************* */
+    //************************************BOOKMARK***************** */
+    //************************************************************* */
+    //************************************************************* */
+
+    BlogPost.create({ title, author_id, content, })
         .then(post => {
             return res.status(201).json(post.easyRead())
         })

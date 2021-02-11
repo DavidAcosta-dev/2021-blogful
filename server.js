@@ -5,6 +5,7 @@ mongoose.Promise = global.Promise;
 const morgan = require('morgan');
 //import blogPosts router
 const blogPostsRouter = require('./Routers/blogPostsRouter');
+const authorsRouter = require('./Routers/authorsRouter');
 const { PORT, DATABASE_URL } = require('./config');
 
 
@@ -22,7 +23,9 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/index.html');
 });
 
-app.use('/blog-posts', blogPostsRouter); //router middleware
+//router middleware
+app.use('/blog-posts', blogPostsRouter);
+app.use('/authors', authorsRouter);
 
 // catch-all endpoint if client makes request to non-existent endpoint
 app.use("*", function (req, res) {
