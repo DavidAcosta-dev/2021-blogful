@@ -46,10 +46,12 @@ router.get('/', (req, res) => {
         }
     });
 
+    console.log(filters);
     //Now query the database with the "filters" query object.
     BlogPost.find(filters)
         .then(posts => {
-            return res.status(200).json(posts.map(post => post.easyRead()));
+            console.log(posts);
+            return res.status(200).json(posts.map(pst => pst.easyRead()));
         })
         .catch(err => {
             const errMsg = {
@@ -85,31 +87,95 @@ router.post('/', (req, res) => {
 
     const { title, author_id, content } = req.body;
 
-    //NEXT: Check if the author exists before
-    //************************************************************* */
-    //************************************************************* */
-    //*************BOOKMARK**************************************** */
-    //***********************************BOOKMARK****************** */
-    //************************************************************* */
-    //**********************BOOKMARK******************************* */
-    //************************************BOOKMARK***************** */
-    //************************************************************* */
-    //************************************************************* */
-
-    BlogPost.create({ title, author_id, content, })
-        .then(post => {
-            return res.status(201).json(post.easyRead())
+    // Check if the author exists before
+    Author.findById(author_id)
+        .then(athr => {
+            console.log(athr);
+            if (!athr) {
+                res.status(400).send("Looks like that author doesn't exist.")
+                return res.end();
+            } else {
+                return
+            }
         })
         .catch(err => {
             const errMsg = {
-                message: `Something's gone wrong on our end, sorry`,
+                message: `Something's gone wrong during Authur check, sorry`,
                 error: err
             };
             console.error(errMsg);
             res.status(500).json(errMsg);
+        });//end of author check
+
+    //Post now that we know author exists...
+    BlogPost.create({ title, author: author_id, content, })
+        .then(pst => {
+            //create() returns the new blog with an "unpopulated" "author" key so we have to query it so that it sets off our mongoose.pre hook and populates our author.
+            BlogPost.findById(pst.id)
+                .then(populatedPost => {
+                    console.log(populatedPost);
+                    res.status(201).json(populatedPost.easyRead()).end();
+                })
+                .catch(err => {
+                    const errMsg = {
+                        message: `Something's gone wrong When qurying the newly created object to return to you, sorry`,
+                        error: err
+                    };
+                    console.error(errMsg);
+                    res.status(500).json(errMsg);
+                });
         })
+        .catch(err => {
+            const errMsg = {
+                message: `Something went wrong during creation of new blog post, sorry`,
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg);
+        });
+
 });
 //-----------------------------------END of POST------------------------------------//
+
+
+
+router.put('/:postId/comments', (req, res) => {
+    //ensure body id and url id match
+    if (req.params.postId !== req.body.id) {
+        const errMsg = "Please ensure the req.body.id and url param postId match. Must include both.";
+        console.error(errMsg);
+        res.status(400).send(errMsg).end();
+    };
+    //make new object out of all valid fields in updateableFields.
+    const requiredFields = ["author_id", "content"];
+    const newComment = {};
+    requiredFields.forEach(field => {
+        if (field in req.body) {
+            newComment[field] = req.body[field];
+        };
+    });
+
+    console.log(newComment);
+
+    BlogPost.findById(req.params.postId)
+        .then(pst => {
+            console.log(pst.comments);
+            pst.comments.push({ author: newComment.author_id, content: newComment.content });
+            pst.save()
+            res.status(200).json(pst).end();
+        })
+        .catch(err => {
+            const errMsg = {
+                message: "Whoops, Internal Server error",
+                error: err
+            };
+            console.error(errMsg);
+            res.status(500).json(errMsg).end();
+        });
+
+});
+//-----------------------------------END of PUT/comments------------------------------------//
+
 
 
 router.put('/:id', (req, res) => {
@@ -121,7 +187,7 @@ router.put('/:id', (req, res) => {
     };
 
     //make new object out of all valid fields in updateableFields.
-    const updateableFields = ["title", "author", "content"];
+    const updateableFields = ["title", "content"];
     const newBody = {};
     updateableFields.forEach(field => {
         if (field in req.body) {
@@ -130,6 +196,7 @@ router.put('/:id', (req, res) => {
     });
 
     console.log(newBody);
+
 
     BlogPost.findByIdAndUpdate(req.params.id, { $set: newBody }, { new: true })
         .then(pst => {
@@ -145,6 +212,8 @@ router.put('/:id', (req, res) => {
         });
 });
 //-----------------------------------END of PUT------------------------------------//
+
+
 
 
 router.delete('/:id', (req, res) => {

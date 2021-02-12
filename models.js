@@ -11,7 +11,11 @@ const authorSchema = mongoose.Schema({
 });
 
 //Declare subdocument comments schema
-const commentSchema = mongoose.Schema({ content: { type: String } });
+const commentSchema = mongoose.Schema({
+    content: { type: String },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'Author' },
+    created: { type: Date, default: Date.now }
+});
 
 
 //Declare blog post schema.
@@ -32,13 +36,18 @@ const blogPostSchema = mongoose.Schema({
 
 /*use a pre-hook Mongoose Query middleware when using BlogPost.findOne so we can pre-populate the 'author' key
   on the blogPost object, activating the reference we defined in the blogPostSchema. */
-blogPostSchema.pre('find', function (next) {
-    this.populate('author');
+// findOne must go before find sice this is middleware and one is executed after the other, hence the "next()"...
+blogPostSchema.pre('findOne', function (next) {
+    this.populate(['author', 'comments.author']); //this populates both the blog author and all the comment author.
+    //this.populate('author');
+    // this.populate('comments.author');
     next();
 });
 
-blogPostSchema.pre('findOne', function (next) {
-    this.populate('author');
+blogPostSchema.pre('find', function (next) {
+    this.populate(['author', 'comments.author']);
+    //this.populate('author');
+    // this.populate('comments.author');
     next();
 });
 
@@ -47,6 +56,24 @@ blogPostSchema.pre('findOne', function (next) {
 blogPostSchema.virtual("authorFullName").get(function () {
     return `${this.author.firstName} ${this.author.lastName}`.trim();
 });
+
+commentSchema.virtual("authorFullName").get(function () {
+    return `${this.author.firstName} ${this.author.lastName}`.trim();
+});
+
+//use this to save/update a document and return it populated.
+// blogPostSchema.methods.saveAndPopulate = function (blog) {
+//     return blog.save().then(blog => blog.populate('author').execPopulate());
+// };
+
+commentSchema.methods.easyRead = function () {
+    return {
+        id: this._id,
+        content: this.content,
+        author: this.authorFullName,
+        created: this.created
+    }
+};
 
 // this is an *instance method* which will be available on all instances
 // of the blog post object (not the model. It will not be available to BlogPost only to the blog object living in database). 
@@ -62,9 +89,9 @@ blogPostSchema.methods.easyRead = function () {
     return {
         id: this._id,
         title: this.title,
-        author: this.authorFullName, //using virtual to represent the author property
+        author: this.authorFullName, //using virtual to represent the author property. NOTE: This authorFullName virtual depends on the "author" key already beng pre-populated!
         content: this.content,
-        comments: this.comments,
+        comments: this.comments.map(cmt => cmt.easyRead()), //Awesome way of using instance method that we created on the commentSchema
         created: this.created
     }
 
