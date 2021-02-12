@@ -139,7 +139,7 @@ router.post('/', (req, res) => {
 
 
 
-router.put('/:postId/comments', (req, res) => {
+router.put('/comments/:postId', (req, res) => {
     //ensure body id and url id match
     if (req.params.postId !== req.body.id) {
         const errMsg = "Please ensure the req.body.id and url param postId match. Must include both.";
